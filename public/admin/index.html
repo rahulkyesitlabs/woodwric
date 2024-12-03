@@ -1,0 +1,86 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Content Manager</title>
+    <style>
+        [data-slate-editor] {
+            -webkit-user-modify: read-write !important;
+        }
+    </style>
+    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script> <!-- Markdown parser -->
+    <script src="https://cdn.jsdelivr.net/npm/gray-matter/gray-matter.min.js"></script> <!-- YAML parser -->
+</head>
+<body>
+    <!-- Include the script that builds the page and powers Netlify CMS -->
+    <script src="https://unpkg.com/netlify-cms@^2.0.0/dist/netlify-cms.js"></script>
+    <script>
+        // Global variable to hold the social media data
+        let socialMediaData = {};
+
+        // Fetch the content of the Markdown file
+        async function fetchSocialMediaData() {
+            try {
+                const response = await fetch('/src/content/social-media/social-media.md');  // Ensure the correct path
+                const markdown = await response.text();
+
+                // Use gray-matter to parse the Markdown and extract the data
+                const parsedData = matter(markdown);  // `matter` function parses the Markdown
+
+                // Store the frontmatter data (YAML part)
+                socialMediaData = parsedData.data;
+
+                // Now you can use this socialMediaData variable globally in your pages
+                console.log(socialMediaData);  // Check the parsed data in console
+
+            } catch (error) {
+                console.error('Error fetching social media data:', error);
+            }
+        }
+
+        // Call the function to fetch data when the page loads
+        fetchSocialMediaData();
+
+        // Register the custom-string widget properly
+        CMS.registerWidget('custom-string', window.WidgetStringControl.extend({
+            pattern: ['^([^\\s]+\\s?){1,5}$', 'Title must not exceed 5 words'],
+        }), window.WidgetStringPreview);
+
+        // Register UUID widget (as in your original setup)
+        const uuidControl = createClass({
+            componentDidMount: function () {
+                if (!this.props.value) {
+                    this.props.onChange(generateUUID());
+                }
+            },
+            handleChange: function (e) {
+                if (this.props.value) {
+                    return;
+                }
+                this.props.onChange(generateUUID());
+            },
+            render: function () {
+                var value = this.props.value;
+                return h("input", { disabled: true, style: { color: '#cdcdcd' }, className: this.props.classNameWrapper, id: this.props.forID, type: "text", value: value, onChange: this.handleChange });
+            }
+        });
+
+        function generateUUID() {
+            var d = new Date().getTime();
+            var uuid = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+                var r = (d + Math.random() * 16) % 16 | 0;
+                d = Math.floor(d / 16);
+                return (c == "x" ? r : (r & 0x7) | 0x8).toString(16);
+            });
+            return uuid;
+        }
+
+        CMS.registerWidget("uuid", uuidControl);
+
+        // Register preview style
+        CMS.registerPreviewStyle("/css/style.css");
+    </script>
+</body>
+</html>
